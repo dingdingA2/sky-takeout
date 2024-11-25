@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 /**
 * @author 15854
 * @description 针对表【dish(菜品)】的数据库操作Service实现
-* @createDate 2024-11-25 17:56:46
+* @createDate 2024-11-25 19:22:57
 */
 @Service
 public class DishServiceImpl extends ServiceImpl<DishMapper, Dish>

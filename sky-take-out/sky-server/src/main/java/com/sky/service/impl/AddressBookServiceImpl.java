@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 /**
 * @author 15854
 * @description 针对表【address_book(地址簿)】的数据库操作Service实现
-* @createDate 2024-11-25 17:55:39
+* @createDate 2024-11-25 19:22:27
 */
 @Service
 public class AddressBookServiceImpl extends ServiceImpl<AddressBookMapper, AddressBook>
