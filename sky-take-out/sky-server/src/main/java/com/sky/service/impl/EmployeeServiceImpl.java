@@ -39,6 +39,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public Employee login(EmployeeLoginDTO employeeLoginDTO) {
         String username = employeeLoginDTO.getUsername();
         String password = employeeLoginDTO.getPassword();
+
         //1、根据用户名查询数据库中的数据
         Employee employee = employeeMapper.getByUsername(username);
 
@@ -49,7 +50,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         //密码比对
-        // TODO 后期需要进行md5加密，然后再进行比对
+        //对前端传过来的明文密码进行md5加密处理
         password = DigestUtils.md5DigestAsHex(password.getBytes());
         if (!password.equals(employee.getPassword())) {
             //密码错误
@@ -65,25 +66,32 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employee;
     }
 
-    //新增员工
-    @Override
+    /**
+     * 新增员工
+     * @param employeeDTO
+     */
     public void save(EmployeeDTO employeeDTO) {
+        System.out.println("当前线程的id:" + Thread.currentThread().getId());
         Employee employee = new Employee();
-        //对象拷贝,前面的拷贝到后面的,要注意拷贝的属性名字要一样,因为前后两个对象不是同一个对象
-        BeanUtils.copyProperties(employeeDTO, employee);
-        //解释一下上面的对象拷贝的意思,就是把employeeDTO里面的属性值拷贝到employee里面,作用是减少代码量
-//        employee里面的数据是比EmployeeDTO的多一些,所以多余的部分需要我们自己手动赋值
-        employee.setStatus(StatusConstant.ENABLE);//定义了一个常量类(不要写死,以后要改直接在常量类里面改就好了,所以这样写)
-        employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));//也是常量类效果同上
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
 
-        //TODO 当前登录用户id还要学会TODO的用法
-        employee.setCreateUser(BaseContext.getCurrentId());
-        employee.setUpdateUser(BaseContext.getCurrentId());
+        //对象属性拷贝，属性名必须一致
+        BeanUtils.copyProperties(employeeDTO, employee);
+
+        //设置账号的状态，默认正常状态，1表示正常，0表示锁定
+        employee.setStatus(StatusConstant.ENABLE);
+
+        //设置密码，默认密码为123456
+        employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
+
+        //设置当前记录的创建时间和修改时间
+        //employee.setCreateTime(LocalDateTime.now());
+        //employee.setUpdateTime(LocalDateTime.now());
+
+        //设置当前记录的创建人id和修改人id
+        //employee.setCreateUser(BaseContext.getCurrentId());
+        //employee.setUpdateUser(BaseContext.getCurrentId());
 
         employeeMapper.insert(employee);
-
     }
 
     /**
@@ -91,16 +99,61 @@ public class EmployeeServiceImpl implements EmployeeService {
      * @param employeePageQueryDTO
      * @return
      */
-    @Override
     public PageResult pageQuery(EmployeePageQueryDTO employeePageQueryDTO) {
-        //select * from employee limit 0,10
-        //开始分页查询 用一个插件 PageHelper
+        // select * from employee limit 0,10
+        //开始分页查询
         PageHelper.startPage(employeePageQueryDTO.getPage(), employeePageQueryDTO.getPageSize());
-        Page<Employee> page = employeeMapper.pageQuery(employeePageQueryDTO);
-        long total = page.getTotal();
-        List<Employee> records = page.getResult();
 
-        return new PageResult(total, records);
+        Page<Employee> page = employeeMapper.pageQuery(employeePageQueryDTO);
+
+        long total = page.getTotal();
+        List<Employee> result = page.getResult();
+
+        return new PageResult(total, result);
     }
 
+    /**
+     * 启用/禁用员工账号
+     * @param status
+     * @param id
+     */
+    public void startOrStop(Integer status, Long id) {
+        // update employee set status = ? where id = ?
+
+        /*Employee employee = new Employee();
+        employee.setStatus(status);
+        employee.setId(id);*/
+
+        Employee employee = Employee.builder()
+                .status(status)
+                .id(id)
+                .build();
+
+        employeeMapper.update(employee);
+    }
+
+    /**
+     * 根据id查询员工
+     * @param id
+     * @return
+     */
+    public Employee getById(Long id) {
+        Employee employee = employeeMapper.getById(id);
+        employee.setPassword("*******");
+        return employee;
+    }
+
+    /**
+     * 编辑员工信息
+     * @param employeeDTO
+     */
+    public void update(EmployeeDTO employeeDTO) {
+        Employee employee = new Employee();
+        BeanUtils.copyProperties(employeeDTO, employee);
+
+        //employee.setUpdateTime(LocalDateTime.now());
+        //employee.setUpdateUser(BaseContext.getCurrentId());
+
+        employeeMapper.update(employee);
+    }
 }
